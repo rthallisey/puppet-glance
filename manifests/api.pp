@@ -202,6 +202,7 @@ class glance::api(
   $database_idle_timeout    = 3600,
   $image_cache_dir          = '/var/lib/glance/image-cache',
   $os_region_name           = 'RegionOne',
+  $ironic_enabled           = 'n',
   # DEPRECATED PARAMETERS
   $mysql_module             = undef,
   $sql_idle_timeout         = false,
@@ -274,6 +275,20 @@ class glance::api(
     }
   }
 
+  if ($ironic_enabled == 'y') {
+    glance_api_config {
+      'DEFAULT/show_image_direct_url': value => 'True';
+      'DEFAULT/default_store': value => 'swift';
+      'glance_store/swift_store_create_container_on_put': value => 'true';
+      'glance_store/swift_store_key': value => $keystone_password;
+      'glance_store/swift_store_user': value => 'services:glance';
+      'glance_store/swift_store_auth_address': value => "${auth_protocol}://${auth_host}:5000/v2.0/";
+    }
+  } else {
+    glance_api_config {
+      'DEFAULT/show_image_direct_url': value => $show_image_direct_url;
+    }
+  }
   # basic service config
   glance_api_config {
     'DEFAULT/verbose':               value => $verbose;
@@ -282,7 +297,6 @@ class glance::api(
     'DEFAULT/bind_port':             value => $bind_port;
     'DEFAULT/backlog':               value => $backlog;
     'DEFAULT/workers':               value => $workers;
-    'DEFAULT/show_image_direct_url': value => $show_image_direct_url;
     'DEFAULT/image_cache_dir':       value => $image_cache_dir;
     'DEFAULT/os_region_name':        value => $os_region_name;
   }
