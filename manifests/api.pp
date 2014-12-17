@@ -165,6 +165,15 @@
 # [*os_region_name*]
 #   (optional) Sets the keystone region to use.
 #   Defaults to 'RegionOne'.
+#
+# [*ironic_enabled*]
+#   Whether Ironic is enabled.
+#   Defaults to false.
+#
+# [*glance_backend*]
+#   The storage backend for how Glance stores disk images.
+#   Defaults to 'file'.
+
 class glance::api(
   $keystone_password,
   $verbose                  = false,
@@ -202,7 +211,8 @@ class glance::api(
   $database_idle_timeout    = 3600,
   $image_cache_dir          = '/var/lib/glance/image-cache',
   $os_region_name           = 'RegionOne',
-  $ironic_enabled           = 'n',
+  $ironic_enabled           = false,
+  $glance_backend           = 'file',
   # DEPRECATED PARAMETERS
   $mysql_module             = undef,
   $sql_idle_timeout         = false,
@@ -275,14 +285,14 @@ class glance::api(
     }
   }
 
-  if ($ironic_enabled == 'y') {
+  if $ironic_enabled {
     glance_api_config {
-      'DEFAULT/show_image_direct_url': value => 'True';
-      'DEFAULT/default_store': value => 'swift';
-      'glance_store/swift_store_create_container_on_put': value => 'true';
-      'glance_store/swift_store_key': value => $keystone_password;
-      'glance_store/swift_store_user': value => 'services:glance';
-      'glance_store/swift_store_auth_address': value => "${auth_protocol}://${auth_host}:5000/v2.0/";
+      'DEFAULT/show_image_direct_url':                    value => true;
+      'DEFAULT/default_store':                            value => $glance_backend;
+      'glance_store/swift_store_create_container_on_put': value => true;
+      'glance_store/swift_store_key':                     value => $keystone_password;
+      'glance_store/swift_store_user':                    value => 'services:glance';
+      'glance_store/swift_store_auth_address':            value => "${auth_protocol}://${auth_host}:5000/v2.0/";
     }
   } else {
     glance_api_config {

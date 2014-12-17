@@ -39,6 +39,7 @@ describe 'glance::api' do
       :known_stores             => false,
       :image_cache_dir          => '/var/lib/glance/image-cache',
       :os_region_name           => 'RegionOne',
+      :ironic_enabled           => true,
     }
   end
 
@@ -248,6 +249,17 @@ describe 'glance::api' do
       it { expect { should contain_glance_api_config('filter:authtoken/auth_admin_prefix') }.to\
         raise_error(Puppet::Error, /validate_re\(\): "#{auth_admin_prefix}" does not match/) }
     end
+  end
+
+  describe 'with ironic enabled' do
+    let :params do
+      default_params
+    end
+
+    it { should contain_glance_api_config('DEFAULT/show_image_direct_url').with_value(true) }
+    it { should contain_glance_api_config('glance_store/swift_store_create_container_on_put').with_value(true) }
+    it { should contain_glance_api_config('glance_store/swift_store_key').with_value(default_params[:keystone_password]) }
+    it { should contain_glance_api_config('glance_store/swift_store_user').with_value('services:glance') }
   end
 
   describe 'with syslog disabled by default' do
